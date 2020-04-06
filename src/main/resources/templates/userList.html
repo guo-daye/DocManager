@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>用户管理界面</title>
+    <script src="/DocManager/js/jquery-3.4.1.js"></script>
+    <link rel="stylesheet" href="/DocManager/js/layui/css/layui.css">
+    <script src="/DocManager/js/layui/layui.js"></script>
+</head>
+<body>
+<form class="layui-form" onsubmit="return false;">
+    <h2>用 户 管 理</h2>
+    <hr>
+    <div class="layui-form-item">
+        <label class="layui-form-label">用户ID：</label>
+        <div class="layui-input-inline">
+            <input type="text" id ="user_id" name ="user_id" placeholder="请输入" autocomplete="off" class="layui-input">
+        </div>
+        <label class="layui-form-label">注册时间：</label>
+        <div class="layui-input-inline">
+            <input type="text" name="rtime" class="layui-input" id="test1" placeholder="yyyy-mm-dd">
+        </div>
+        <label class="layui-form-label">状态：</label>
+        <div class="layui-input-inline">
+            <select name="state" lay-filter="aihao" id="state">
+                <option value="0">无</option>
+                <option value="1">启用</option>
+                <option value="2">禁用</option>
+                <option value="3">删除</option>
+            </select>
+        </div>
+        <button class="layui-btn" lay-submit lay-filter="formDemo"><i class="layui-icon layui-icon-search"></i> 查询</button>
+    </div>
+    <table class="layui-hide" id="test" lay-filter="test"></table>
+</form>
+<script>
+    layui.use(['table','form','laydate'], function(){
+        var table = layui.table,form = layui.form,laydate = layui.laydate;
+
+        laydate.render({
+            elem: '#test1'
+            ,type: 'date'
+            ,range: '~' //或 range: '~' 来自定义分割字符
+        });
+
+        table.render({
+            elem: '#test'
+            ,url:'../../user/findUserList'
+            ,toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
+            ,defaultToolbar: ['filter', 'exports', 'print', { //自定义头部工具栏右侧图标。如无需自定义，去除该参数即可
+                title: '提示'
+                ,layEvent: 'LAYTABLE_TIPS'
+                ,icon: 'layui-icon-tips'
+            }]
+            ,limit:5
+            ,title: '用户数据表'
+            ,id: 'demotable'
+            ,cols: [
+                    [
+                        {type: 'checkbox', fixed: 'left'}
+                        ,{field:'row_id', title:'ID', width:80, fixed: 'left', unresize: true, sort: true}
+                        ,{field:'user_id', title:'用户ID', width:100}
+                        ,{field:'user_pwd', title:'密码', width:100}
+                        ,{field:'user_sex', title:'性别', width:50}
+                        ,{field:'education', title:'学历', width:80}
+                        ,{field:'profession', title:'职业'}
+                        ,{field:'user_tel', title:'手机号', width:120}
+                        ,{field:'email', title:'邮箱', width:150}
+                        ,{field:'integral', title:'积分', width:80, sort: true}
+                        ,{field:'rtime', title:'加入时间', width:120,sort:true}
+                        ,{field:'state', title:'状态', width:100,templet:'#tpl1'}
+                        ,{fixed: 'right', title:'操作', toolbar: '#barDemo', width:200}
+                    ]
+                   ]
+            ,page: true
+        });
+
+        form.on('submit(formDemo)',function (data) {
+            table.reload('demotable', {
+                url:'../../user/findUserList'
+                ,where:{
+                    user_id:$('#user_id').val()
+                    ,period:$('#test1').val()
+                    ,state:$('#state').val()
+                }
+                ,page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+            })
+        });
+
+        //头工具栏事件
+        table.on('toolbar(test)', function(obj){
+            var checkStatus = table.checkStatus(obj.config.id);
+            switch(obj.event){
+                case 'getCheckData':
+                    var data = checkStatus.data;
+                    layer.alert(JSON.stringify(data));
+                    break;
+                case 'getCheckLength':
+                    var data = checkStatus.data;
+                    layer.msg('选中了：'+ data.length + ' 个');
+                    break;
+                case 'isAll':
+                    layer.msg(checkStatus.isAll ? '全选': '未全选');
+                    break;
+
+                //自定义头工具栏右侧图标 - 提示
+                case 'LAYTABLE_TIPS':
+                    layer.alert('这是工具栏右侧自定义的一个图标按钮');
+                    break;
+            };
+        });
+
+        table.on('tool(test)', function(obj){
+            var data = obj.data;
+            //console.log(obj)
+            var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+            var tr = obj.tr; //获得当前行 tr 的 DOM 对象（如果有的话）
+            var row_id = tr.find("td").eq(1).text();
+            if(obj.event === 'delete'){
+                layer.confirm('真的删除改用户吗', function(index){
+                    $.ajax({
+                        url:'../../user/updateState',
+                        type:'post',
+                        data:{'row_id':row_id,'state':3},
+                        success:function (msg) {
+                            layer.msg(msg);
+                            //重载表格
+                            table.reload('demotable', {
+                                url:'../../user/findUserList'
+                                ,where:{
+                                    user_id:$('#user_id').val()
+                                    ,period:$('#test1').val()
+                                    ,state:$('#state').val()
+                                }
+                                ,page: {
+                                    curr: 1 //重新从第 1 页开始
+                                }
+                            })
+                        },
+                        error:function () {
+                            layer.msg('网络异常')
+                        }
+                    })
+                });
+            }else if(obj.event === 'edit'){
+
+            }else if(obj.event === 'enable'){
+                layer.confirm('确定要启用该用户吗', function(index){
+                    $.ajax({
+                        url:'../../user/updateState',
+                        type:'post',
+                        data:{'row_id':row_id,'state':1},
+                        success:function (msg) {
+                            layer.msg(msg);
+                            //重载表格
+                            table.reload('demotable', {
+                                url:'../../user/findUserList'
+                                ,where:{
+                                    user_id:$('#user_id').val()
+                                    ,period:$('#test1').val()
+                                    ,state:$('#state').val()
+                                }
+                                ,page: {
+                                    curr: 1 //重新从第 1 页开始
+                                }
+                            })
+                        },
+                        error:function () {
+                            layer.msg('网络异常')
+                        }
+                    })
+                });
+            }else if(obj.event === 'disable'){
+                layer.confirm('确定要禁用该用户吗', function(index){
+                    $.ajax({
+                        url:'../../user/updateState',
+                        type:'post',
+                        data:{'row_id':row_id,'state':2},
+                        success:function (msg) {
+                            layer.msg(msg);
+                            //重载表格
+                            table.reload('demotable', {
+                                url:'../../user/findUserList'
+                                ,where:{
+                                    user_id:$('#user_id').val()
+                                    ,period:$('#test1').val()
+                                    ,state:$('#state').val()
+                                }
+                                ,page: {
+                                    curr: 1 //重新从第 1 页开始
+                                }
+                            })
+                        },
+                        error:function () {
+                            layer.msg('网络异常')
+                        }
+                    })
+                });
+            }
+        });
+    });
+</script>
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckData">获取选中行数据</button>
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button>
+        <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button>
+    </div>
+</script>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    {{# if (d.state === 1){ }}
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="disable">禁用</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="delete">删除</a>
+    {{# } else if (d.state === 2){ }}
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="enable">启用</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="delete">删除</a>
+    {{#  } }}
+</script>
+<script type="text/html" id="tpl1">
+    {{# if (d.state === 1){ }}
+    <span class="green">启用</span>
+    {{# } else if (d.state === 2){ }}
+    <span class="gray">禁用</span>
+    {{# } else{ }}
+    <span class="gray">删除</span>
+    {{#  } }}
+</script>
+</body>
+</html>

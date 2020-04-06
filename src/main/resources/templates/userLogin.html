@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>登陆界面</title>
+    <script src="/DocManager/js/jquery-3.4.1.js"></script>
+    <link rel="stylesheet" href="/DocManager/js/layui/css/layui.css">
+    <script src="/DocManager/js/layui/layui.js"></script>
+
+    <style>
+        html,body{
+            width: 100%;
+            height: 100%;
+        }
+
+        #login-div{
+            margin-left: 32%;
+            margin-top: 10%;
+        }
+    </style>
+</head>
+<body background="/DocManager/image/bg.jpg" style="background-repeat: no-repeat;background-size: 100% 100%;overflow: hidden">
+<div id="login-div">
+    <form class="layui-form" action="" onsubmit="return false;">
+        <div class="layui-form-item">
+            <label class="layui-form-label"><i class="layui-icon layui-icon-username" style="font-size: 30px"></i></label>
+            <div class="layui-input-inline">
+                <input type="text" name="user_id" required  lay-verify="required" placeholder="请输入账号" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label"><i class="layui-icon layui-icon-password" style="font-size: 30px"></i></label>
+            <div class="layui-input-inline">
+                <input type="password" name="user_pwd" required lay-verify="required" placeholder="请输入密码" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label"><i class="layui-icon layui-icon-vercode" style="font-size: 30px"></i></label>
+            <div class="layui-input-inline">
+                <input type="text" name="code" required lay-verify="required" placeholder="请填写验证码" autocomplete="off" class="layui-input">
+            </div>
+            <img src="../../verify/getVerifyCode" onclick="RefreshCode()" id="code">
+            <a href="javascript:;" onclick="RefreshCode()">看不清？换一张</a>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="formDemo">立即提交</button>
+                <button class="layui-btn layui-btn-primary" onclick="toRegister()">注册</button>
+            </div>
+        </div>
+    </form>
+</div>
+</body>
+<script>
+    function toRegister() {
+        window.location.href = '../../web/url/addUser';
+    }
+
+    function RefreshCode() {
+        console.log("刷新验证码")
+        $("#code").attr("src","../../verify/getVerifyCode?num="+Math.random())
+    }
+
+
+	layui.use(['form','jquery'], function(){
+		var form = layui.form;
+		$ = layui.jquery;
+		form.on('submit(formDemo)', function(data){
+            var index = parent.layer.getFrameIndex(window.name);
+			$.ajax({
+				url: "../../user/login",
+				type: "post",
+				data: data.field,
+				success: function (msg) {
+                    if(msg==='验证码错误')
+                    {
+                        layer.alert(msg,{icon:4});
+                        RefreshCode();
+                    }else if(msg==='账号或密码错误')
+                    {
+                        layer.alert(msg,{icon:5});
+                        RefreshCode();
+                    }else if (msg==='您的账号已被封禁')
+                    {
+                        layer.alert(msg,{icon:5});
+                        RefreshCode();
+                    }else
+                    {
+                        var tb_rolerelation = JSON.parse(msg);
+                        layer.alert('欢迎您',{
+                            icon:6,
+                            btn:['确定'],
+                            btn1:function (index) {
+                                if(tb_rolerelation.tb_role.role ==='用户')
+                                {
+                                    if(index!=null)
+                                    {
+                                        parent.layer.close(index);
+                                    }else
+                                    {
+                                        parent.location.href = '../../web/url/index';
+                                    }
+                                }else
+                                {
+                                    parent.location.href = '../../web/url/admin';
+                                }
+                            }
+                        })
+                    }
+				},
+				error: function (err) {
+					layer.msg("网络繁忙");
+				}
+			});
+			return false;
+		});
+	});
+</script>
+</html>

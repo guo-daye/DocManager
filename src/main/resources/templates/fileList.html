@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>文件列表</title>
+    <link rel="stylesheet" href="/DocManager/js/layui/css/layui.css">
+    <link rel="stylesheet" href="/DocManager/js/static/css/mian.css">
+    <script src="/DocManager/js/layui/layui.js"></script>
+    <script src="/DocManager/js/jquery-3.4.1.js"></script>
+    <style>
+        .im{
+            width: 30%;
+            height: 30%;
+        }
+    </style>
+</head>
+<body>
+<div class="lay-blog">
+    <div class="container">
+        <div class="contar-wrap"  id="contain">
+        </div>
+        <div id="test1" style="text-align: center"></div>
+    </div>
+</div>
+<script>
+    layui.config({
+        base: '/DocManager/js/static/js/'
+    }).use('blog');
+
+    layui.use(['layer','laypage'],function () {
+        var layer = layui.layer,laypage = layui.laypage;
+        $(document).ready(function () {
+            var file_title = $(window.parent.document).find('#file_title').val();
+            console.info('file_title='+file_title);
+            $.ajax({
+                url:'../../file/fileList',
+                type:'post',
+                data: {'file_title':file_title,'page':1,'limit':5},
+                success:function (msg) {
+                    for(var key in msg) {
+                        if(key === 'count') {
+                            laypage.render({
+                                elem: 'test1' //注意，这里的 test1 是 ID，不用加 # 号
+                                ,count:msg['count']//数据总数，从服务端得到
+                                ,limit:5
+                                ,jump:function (obj,first) {
+                                    $.ajax({
+                                        url: '../../file/fileList',
+                                        type: 'post',
+                                        data:{'file_title':file_title,'page':obj.curr,'limit':obj.limit},
+                                        success:function (msg) {
+                                            for(var key in msg){
+                                                if(key === 'fileList') {
+                                                    var html = '<h4 class="item-title">';
+                                                    html +='<p><i class="layui-icon layui-icon-speaker"></i>公告：<span>传一云内测版正式上线啦！！！</span></p>'
+                                                    html += '</h4>';
+                                                    for(var file in msg['fileList']) {
+                                                        html += '<div class="item">';
+                                                        html += '<div class="item-box  layer-photos-demo1 layer-photos-demo">';
+                                                        html += '<h3>'+msg['fileList'][file].file_title+'</a></h3>';
+                                                        html += '<h5 style="width: 50%">上传于：<span>'+msg['fileList'][file].upload_time+'</span></h5>';
+                                                        html += '<h5 style="width: 50%">上传者：<span>'+msg['fileList'][file].user_id+'</span></h5>';
+                                                        if(msg['fileList'][file].type == 'doc' || msg['fileList'][file].type == 'docx'){
+                                                            html += '<img class="im" src="/DocManager/image/word.jpg" alt="">';
+                                                        }else if(msg['fileList'][file].type == 'ppt' || msg['fileList'][file].type == 'pptx'){
+                                                            html += '<img class="im" src="/DocManager/image/ppt.jpg" alt="">';
+                                                        }else if(msg['fileList'][file].type == 'xls' || msg['fileList'][file].type == 'xlsx'){
+                                                            html += '<img class="im" src="/DocManager/image/excel.jpg" alt="">';
+                                                        }else if(msg['fileList'][file].type == 'pdf'){
+                                                            html += '<img class="im" src="/DocManager/image/pdf.jpg" alt="">';
+                                                        }else {
+                                                            html += '<img class="im" src="/DocManager/image/txt.jpg" alt="">';
+                                                        }
+                                                        html += '</div>';
+                                                        html += '<div class="comment count">';
+                                                        html += '<input type="hidden" value="'+msg['fileList'][file].file_id+'"/>';
+                                                        html += '<a href="javascript:;" onclick="">评论</a>';
+                                                        html += '<a href="javascript:;" onclick="DownLoad(this)">下载</a>';
+                                                        html += '</div>';
+                                                        html += '</div>';
+                                                    }
+                                                    $('#contain').html(html);
+                                                }
+                                            }
+                                        },
+                                        error:function (msg) {
+                                            layer.msg('网络开小差啦',{icon:5});
+                                        }
+                                    })
+                                }
+                            });
+                        }
+                    }
+                },
+                error:function (msg) {
+                    layer.msg('网络开小差啦',{icon:5})
+                }
+            })
+        })
+    });
+
+    function DownLoad(node) {
+        var parentNode = $(node).closest('div');
+        $.ajax({
+            url:'../../user/judgeUser',
+            type:'post',
+            success:function(msg){
+                if(msg !== 'login')
+                {
+                    window.open('http://localhost:8080/DocManager/file/download?file_id='+parentNode.find('input[type="hidden"]').val());
+                }else
+                {
+                    alert("请先登录")
+                }
+            },
+            error:function (msg) {
+                layer.alert('网络异常',{icon:5})
+            }
+        })
+    }
+
+    function DownLoad(node) {
+        var parentNode = $(node).closest('div');
+        $.ajax({
+            url:'../../user/judgeUser',
+            type:'post',
+            success:function(msg){
+                if(msg !== 'login')
+                {
+                    window.location.href = '../../web/url/';
+                }else
+                {
+                    alert("请先登录")
+                }
+            },
+            error:function (msg) {
+                layer.alert('网络异常',{icon:5})
+            }
+        })
+    }
+</script>
+</body>
+</html>

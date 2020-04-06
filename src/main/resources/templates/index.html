@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>传一云</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="/DocManager/js/layui/css/layui.css">
+	<link rel="stylesheet" href="/DocManager/js/static/css/mian.css">
+	<script src="/DocManager/js/layui/layui.js"></script>
+	<script src="/DocManager/js/jquery-3.4.1.js"></script>
+</head>
+<body class="lay-blog">
+		<div class="header">
+			<div class="header-wrap">
+				<h1 class="logo pull-left">
+					<a href="../../web/url/index">
+						<img src="/DocManager/js/static/images/logo.png" alt="" class="logo-img">
+						<img src="/DocManager/js/static/images/title.png" alt="" class="logo-text">
+					</a>
+				</h1>
+				<form class="layui-form blog-seach pull-left" action="">
+					<div class="layui-form-item blog-sewrap">
+					    <div class="layui-input-block blog-sebox">
+					      <i class="layui-icon layui-icon-search" title="../../web/url/fileList" onclick="changeIframe(this)"></i>
+					      <input type="text" name="file_title" id="file_title" lay-verify="title" autocomplete="off"  class="layui-input" placeholder="搜索">
+					    </div>
+					</div>
+				</form>
+				<div class="blog-nav pull-right">
+					<ul class="layui-nav pull-left" id="head">
+					  	<li class="layui-nav-item layui-this"><a href="javascript:;" title="../../web/url/fileList" onclick="changeIframe(this)">首页</a></li>
+						<li class="layui-nav-item"><a href="javascript:;" title="../../web/url/fileUpload" id="fileUpload" onclick="toUpload(this)">上传文件</a></li>
+						<li class="layui-nav-item"><a href="javascript:;">关于</a></li>
+					</ul>
+					<a href="javascript:;" class="personal pull-left" id="login">
+						<i class="layui-icon layui-icon-username"></i>
+					</a>
+				</div>
+			</div>
+		</div>
+		<div class="container-wrap">
+			<iframe src="../../web/url/fileList" style="width: 100%;height: 600px;border: white" name="useriframe" id="useriframe"></iframe>
+		</div>
+		<div class="footer">
+			<p>
+				<span>&copy; 2020</span>
+				<span><a href="http://www.layui.com" target="_blank">cykjgroup.com</a></span>
+				<span>MIT license</span>
+			</p>
+			<p><span>传一云：你的文档管家</span></p>
+		</div>
+</body>
+<script>
+	layui.config({
+		base: '/DocManager/js/static/js/'
+	}).use('blog');
+	layui.use(['layer'],function () {
+		var layer = layui.layer;
+		$('#login').on('click',function () {
+			$.ajax({
+				url:'../../user/judgeUser',
+				type:'post',
+				success:function(msg){
+					if(msg !== 'login') {
+						layer.alert('您是否要退出呢',{
+							icon:7,
+							btn:['是的','手滑了'],
+							btn1:function (layero, index) {
+								$.ajax({
+									url:'../../user/exit',
+									type:'post',
+									success:function (msg) {
+										layer.msg("退出成功");
+										window.useriframe.location.href = '../../web/url/fileList';
+									},
+									error:function (msg) {
+										layer.msg("网络开小差啦！")
+									}
+								})
+							},
+							btn2:function (layero, index) {
+								layer.close(index);
+							}
+						})
+					}else {
+						layer.open({
+							type: 2,
+							title:'登陆',
+							fixed:false,
+							resize:false,
+							area: ['60%', '60%'],
+							content: '../../web/url/userLogin' //这里content是一个URL，如果你不想让iframe出现滚动条，你还可以content: ['http://sentsin.com', 'no']
+							,success: function(layero, index){
+								console.log(layero, index);
+							}
+						})
+					}
+				},
+				error:function (msg) {
+					layer.alert('网络异常',{icon:5})
+				}
+			})
+		})
+	});
+
+	function toUpload(node) {
+		$.ajax({
+			url:'../../user/judgeUser',
+			type:'post',
+			success:function(msg){
+				if(msg !== 'login')
+				{
+					window.useriframe.location.href = node.title;
+				}else
+				{
+					alert("请先登录")
+				}
+			},
+			error:function (msg) {
+				layer.alert('网络异常',{icon:5})
+			}
+		})
+	}
+
+	function changeIframe(node) {
+		window.useriframe.location.href = node.title;
+	}
+</script>
+</html>

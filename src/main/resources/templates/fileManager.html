@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>文档审核</title>
+    <script src="/DocManager/js/jquery-3.4.1.js"></script>
+    <link rel="stylesheet" href="/DocManager/js/layui/css/layui.css">
+    <script src="/DocManager/js/layui/layui.js"></script>
+</head>
+<body>
+<form class="layui-form" onsubmit="return false;"> <!-- 提示：如果你不想用form，你可以换成div等任何一个普通元素 -->
+    <div class="layui-form-item">
+        <label class="layui-form-label">文档标题：</label>
+        <div class="layui-input-inline">
+            <input type="text" id ="file_title" name ="file_title" placeholder="请输入" autocomplete="off" class="layui-input">
+        </div>
+        <label class="layui-form-label">上传人：</label>
+        <div class="layui-input-inline">
+            <input type="text" id ="user_id" name ="user_id" placeholder="请输入" autocomplete="off" class="layui-input">
+        </div>
+        <label class="layui-form-label">上传时间：</label>
+        <div class="layui-input-inline">
+            <input type="text" name="upload_time" class="layui-input" id="test1" placeholder="yyyy-mm-dd">
+        </div>
+        <label class="layui-form-label">文档类型：</label>
+        <div class="layui-input-inline">
+            <select name="type" lay-filter="aihao" id="type">
+                <option value="0">无</option>
+                <option value="doc">doc</option>
+                <option value="docx">docx</option>
+                <option value="xls">xls</option>
+                <option value="xlsx">xlsx</option>
+                <option value="ppt">ppt</option>
+                <option value="pptx">pptx</option>
+                <option value="pdf">pdf</option>
+                <option value="txt">txt</option>
+            </select>
+        </div>
+        <button class="layui-btn" lay-submit lay-filter="formDemo"><i class="layui-icon layui-icon-search"></i> 查询</button>
+    </div>
+    <table id="demo" lay-filter="tableTest"></table>
+</form>
+<script>
+    layui.use(['table','jquery','form','layer','laydate'], function(){
+        var table = layui.table;
+        var form = layui.form;
+        var layer = layui.layer;
+        var laydate = layui.laydate;
+
+        laydate.render({
+            elem: '#test1'
+            ,type: 'datetime'
+            ,range: '~' //或 range: '~' 来自定义分割字符
+        });
+
+        table.render({
+            elem: '#demo'
+            ,height: 312
+            ,limit:5
+            ,id: 'demotable'
+            ,url: '../../file/findFileList' //数据接口
+            ,page: true //开启分页
+            ,cols: [
+                        [ //表头
+                            {checkbox: true, fixed: true}
+                            ,{field: 'file_id', title: '文档ID', width:100,align:'center', sort: true, fixed: 'left'}
+                            ,{field: 'file_url', title: '文档保存路径',align:'center', width:320}
+                            ,{field: 'file_title', title: '文档标题',align:'center', width:180}
+                            ,{field: 'user_id', title: '上传用户ID',align:'center', width:100}
+                            ,{field: 'upload_time', title: '上传时间',align:'center', width: 200,sort:true}
+                            ,{field: 'integral', title: '下载积分',align:'center', width: 100}
+                            ,{field: 'type', title: '文档类型',align:'center', width: 100}
+                            ,{field: 'frequency', title: '下载次数',align:'center', width: 120,sort:true}
+                            ,{field: 'state', title: '状态',align:'center', width: 80, sort: true,templet:'#tpl1'}
+                            ,{fixed: 'right',title:'操作', width:250, align:'center', templet: '#barDemo'}
+                        ]
+                   ]
+        });
+
+        form.on('submit(formDemo)',function (data) {
+            table.reload('demotable', {
+                url:'../../file/findFileList'
+                ,where:{
+                    file_title:$('#file_title').val()
+                    ,user_id:$('#user_id').val()
+                    ,period:$('#test1').val()
+                    ,type:$('#type').val()
+                }
+                ,page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+            })
+        });
+
+        table.on('tool(tableTest)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+            var data = obj.data; //获得当前行数据
+            var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+            var tr = obj.tr; //获得当前行 tr 的 DOM 对象（如果有的话）
+            var file_id = tr.find("td").eq(1).text();
+            if(layEvent === 'download'){ //下载
+                window.open('http://localhost:8080/DocManager/file/download?file_id='+file_id);
+            } else if(layEvent === 'pass'){ //审核通过
+                layer.confirm('您确定审核通过吗', function(index){
+                    $.ajax({
+                        url:'../../file/checkFile',
+                        type:'post',
+                        data:{'file_id':file_id,'state':2},
+                        success:function (msg) {
+                            layer.msg(msg);
+                            //重载表格
+                            table.reload('demotable', {
+                                url:'../../file/findFileList'
+                                ,where:{
+                                    file_title:$('#file_title').val()
+                                    ,user_id:$('#user_id').val()
+                                    ,period:$('#test1').val()
+                                    ,type:$('#type').val()
+                                }
+                                ,page: {
+                                    curr: 1 //重新从第 1 页开始
+                                }
+                            })
+                        },
+                        error:function () {
+                            layer.msg('网络异常')
+                        }
+                    })
+                });
+            } else if(layEvent === 'violation'){ //违规
+                layer.confirm('您确定审核不通过吗', function(index){
+                    $.ajax({
+                        url:'../../file/checkFile',
+                        type:'post',
+                        data:{'file_id':file_id,'state':3},
+                        success:function (msg) {
+                            layer.msg(msg);
+                            //重载表格
+                            table.reload('demotable', {
+                                url:'../../file/findFileList'
+                                ,where:{
+                                    file_title:$('#file_title').val()
+                                    ,user_id:$('#user_id').val()
+                                    ,period:$('#test1').val()
+                                    ,type:$('#type').val()
+                                }
+                                ,page: {
+                                    curr: 1 //重新从第 1 页开始
+                                }
+                            })
+                        },
+                        error:function () {
+                            layer.msg('网络异常')
+                        }
+                    })
+                });
+            }
+        });
+    });
+
+    function serializeObject($, array){
+        var obj=new Object();
+        $.each(array, function(index,param){
+            if(!(param.name in obj)){
+                obj[param.name]=param.value;
+            }
+        });
+        return obj;
+    }
+</script>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-xs" lay-event="download">下载</a>
+    {{#  if(d.state == 1){ }}
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="pass">审核通过</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="violation">审核不通过</a>
+    {{#  } }}
+</script>
+<script type="text/html" id="tpl1">
+    {{# if (d.state === 1){ }}
+    <span class="green">待审核</span>
+    {{# } else if (d.state === 2){ }}
+    <span class="gray">通过</span>
+    {{# } else{ }}
+    <span class="gray">违规</span>
+    {{#  } }}
+</script>
+</body>
+</html>

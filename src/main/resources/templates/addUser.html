@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>注册页面</title>
+    <script src="/DocManager/js/jquery-3.4.1.js"></script>
+    <link rel="stylesheet" href="/DocManager/js/layui/css/layui.css">
+    <script src="/DocManager/js/layui/layui.js"></script>
+</head>
+<body>
+<form class="layui-form" action="" onsubmit="return false;" lay-filter="formtest">
+    <div class="layui-form-item">
+        <label class="layui-form-label">账号：</label>
+        <div class="layui-input-inline">
+            <input type="text" name="user_id" required id="user_id"  lay-verify="required" placeholder="请输入账号" autocomplete="off" class="layui-input" onblur="judgeId()">
+        </div>
+        <div class="layui-form-mid layui-word-aux" id="user_id_mind"></div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">密码：</label>
+        <div class="layui-input-inline">
+            <input type="password" name="user_pwd" id="user_pwd" required lay-verify="required" placeholder="请输入密码" autocomplete="off" class="layui-input">
+        </div>
+        <div class="layui-form-mid layui-word-aux" id="user_pwd_mind"></div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">确认密码：</label>
+        <div class="layui-input-inline">
+            <input type="password" name="user_pwd_again" id="user_pwd_again" required lay-verify="required" placeholder="请再次输入密码" autocomplete="off" class="layui-input">
+        </div>
+        <div class="layui-form-mid layui-word-aux" id="user_pwd_again_mind"></div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">性别：</label>
+        <div class="layui-input-inline">
+            <input type="radio" name="user_sex" value="男" title="男">
+            <input type="radio" name="user_sex" value="女" title="女" checked>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">学历：</label>
+        <div class="layui-input-inline">
+            <input type="text" name="education" required id="education"  lay-verify="required" placeholder="请输入学历" autocomplete="off" class="layui-input">
+        </div>
+        <div class="layui-form-mid layui-word-aux" id="education_mind"></div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">职业：</label>
+        <div class="layui-input-inline">
+            <input type="text" name="profession" required id="profession"  lay-verify="required" placeholder="请输入职业" autocomplete="off" class="layui-input">
+        </div>
+        <div class="layui-form-mid layui-word-aux" id="profession_mind"></div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">电话号码：</label>
+        <div class="layui-input-inline">
+            <input type="text" name="user_tel" required id="user_tel"  lay-verify="required" placeholder="请输入电话号码" autocomplete="off" class="layui-input">
+        </div>
+        <div class="layui-form-mid layui-word-aux" id="user_tel_mind"></div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">邮箱：</label>
+        <div class="layui-input-inline">
+            <input type="text" name="email" required id="email"  lay-verify="required" placeholder="请输入邮箱" autocomplete="off" class="layui-input">
+        </div>
+        <div class="layui-form-mid layui-word-aux" id="email_mind"></div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit lay-filter="formDemo">立即提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</form>
+<script>
+    function judgeId() {
+        $.ajax({
+            url:'../../user/judgeId',
+            type:'post',
+            data:{'user_id':$("#user_id").val()},
+            beforeSend:function(){
+              if($('#user_id').val().trim()===''||$('#user_id').val()==null)
+              {
+                  $('#user_id_mind').text('用户名不能为空');
+                  return false;
+              }
+            },
+            success: function (msg) {
+                $('#user_id_mind').text(msg);
+            },
+            error: function (err) {
+                layer.msg("网络繁忙");
+            }
+        })
+    }
+
+	//Demo
+	layui.use('form', function(){
+		var form = layui.form;
+		//监听提交
+		form.on('submit(formDemo)', function(data){
+            $.ajax({
+                url: '../../user/addUser',
+                type: 'post',
+                data: data.field,
+                beforeSend:function(){
+                  if($('#user_id_mind').text()!='用户名已存在')
+                  {
+
+                  }else
+                  {
+                      layer.msg($('#user_id_mind').text());
+                      return false;
+                  }
+                  if(data.field.user_pwd!=data.field.user_pwd_again)
+                  {
+                      $('#user_pwd_again_mind').text('密码不一致')
+                      return false;
+                  }
+                },
+                success: function (msg) {
+                    if(msg==='注册成功，即将返回登陆界面')
+                    {
+                        layer.alert(msg,{icon:6},function () {
+                            window.location.href = '../../web/url/userLogin';
+                        })
+                    }else
+                    {
+                        layer.alert(msg)
+                    }
+                },
+                error: function (err) {
+                    layer.msg('网络繁忙');
+                }
+            });
+			return false;
+		});
+	});
+</script>
+</body>
+</html>

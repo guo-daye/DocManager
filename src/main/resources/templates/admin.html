@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>管理员界面</title>
+    <script src="/DocManager/js/jquery-3.4.1.js"></script>
+    <link rel="stylesheet" href="/DocManager/js/layui/css/layui.css">
+    <script src="/DocManager/js/layui/layui.js"></script>
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header">
+        <div class="layui-logo">传一云后台管理系统</div>
+        <!-- 头部区域（可配合layui已有的水平导航） -->
+        <ul class="layui-nav layui-layout-left ">
+            <li class="layui-nav-item"><a href="">控制台</a></li>
+            <li class="layui-nav-item"><a href="">商品管理</a></li>
+            <li class="layui-nav-item"><a href="">用户</a></li>
+            <li class="layui-nav-item">
+                <a href="javascript:;">其它系统</a>
+                <dl class="layui-nav-child">
+                    <dd><a href="">邮件管理</a></dd>
+                    <dd><a href="">消息管理</a></dd>
+                    <dd><a href="">授权管理</a></dd>
+                </dl>
+            </li>
+        </ul>
+        <ul class="layui-nav layui-layout-right ">
+            <li class="layui-nav-item">
+                <a href="javascript:;">
+                    <img src="http://t.cn/RCzsdCq" class="layui-nav-img">
+                    <span id="user_id"></span>
+                </a>
+                <dl class="layui-nav-child">
+                    <dd><a href="">基本资料</a></dd>
+                    <dd><a href="">安全设置</a></dd>
+                </dl>
+            </li>
+            <li class="layui-nav-item"><a href="javascript:;" id="exit">注销</a></li>
+        </ul>
+    </div>
+
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll">
+            <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+            <ul class="layui-nav layui-nav-tree"  lay-filter="test" id="menuNode">
+
+            </ul>
+        </div>
+    </div>
+
+    <div class="layui-body" style="overflow: hidden;">
+        <!-- 内容主体区域 -->
+        <iframe frameborder="0" name="manager" id="div-right-iframe" style="width: 100%;height: 100%;"></iframe>
+    </div>
+
+    <div class="layui-footer">
+        <!-- 底部固定区域 -->
+        © cykjgroup.com - 福建厦门
+    </div>
+</div>
+<script>
+    function changePath(node) {
+        window.manager.location.href = node.title;
+    }
+    //JavaScript代码区域
+    layui.use(['element','layer'], function(){
+        var element = layui.element;
+        var layer = layui.layer;
+        $(document).ready(function () {
+            $.ajax({
+                url:'../../user/findMenu',
+                type:'post',
+                success:function (msg) {
+                   if(msg === 'error')
+                   {
+                       layer.alert('请检查代码');
+                   }else
+                   {
+                       var menuList = JSON.parse(msg)
+                       var menuNode = $('#menuNode');
+                       var html = "";
+                       for (var i = 0;i < menuList.length; i++)
+                       {
+                           html += '<li class="layui-nav-item"><a class="" href="javascript:;">'+menuList[i].menu_name+'</a><dl class="layui-nav-child">';
+                           for (var j = 0; j < menuList[i].menuList.length;j++)
+                           {
+                               html += '<dd><a href="javascript:;" title="'+menuList[i].menuList[j].menu_url+'" onclick="changePath(this)">'+menuList[i].menuList[j].menu_name+'</a></dd>';
+                           }
+                           html += '</dl></li>';
+                       }
+                       menuNode.html(html);
+                       layui.element.init();
+                   }
+                },
+                error:function (msg) {
+                    layer.msg('网络错误',{icon:5})
+                }
+            })
+
+            $.ajax({
+                url:'../../user/judgeUser',
+                type:'post',
+                success:function (msg) {
+                    if(msg!=='login')
+                    {
+                        $('#user_id').text(msg.user_id);
+                    }else
+                    {
+                        window.location.href = '../../web/url/index';
+                    }
+                },
+                error:function (msg) {
+                    layer.msg('网络开小差啦',{icon:7})
+                }
+            })
+        })
+
+        $('#exit').on('click',function () {
+            layer.alert('您是否要退出呢',{
+                icon:7,
+                btn:['是的','手滑了'],
+                btn1:function (layero, index) {
+                    $.ajax({
+                        url:'../../user/exit',
+                        type:'post',
+                        success:function (msg) {
+                            window.location.href = "../../web/url/index";
+                        },
+                        error:function (msg) {
+                            layer.msg("网络开小差啦！")
+                        }
+                    })
+                },
+                btn2:function (layero, index) {
+                    layer.close(index);
+                }
+            })
+        })
+    });
+</script>
+</body>
+</html>

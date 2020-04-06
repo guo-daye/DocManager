@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.great.demo.mapper.FileMapper">
+    <insert id="addFile" parameterType="TB_FILE">
+        insert into tb_file (file_url,file_title,user_id,upload_time,integral,type,frequency,state)
+        values (#{file_url},#{file_title},#{user_id},sysdate(),#{integral},#{type},0,1)
+    </insert>
+
+    <select id="findFileList" resultType="TB_FILE" parameterType="java.util.Map">
+        select * from tb_file
+        <where>
+            <if test="file_title != null and file_title != ''">
+                and file_title like concat('%',#{file_title},'%')
+            </if>
+            <if test="user_id != null and user_id != ''">
+                and user_id like concat('%',#{user_id},'%')
+            </if>
+            <if test="type != null and type != ''">
+                and type = #{type}
+            </if>
+            <if test="state != null and state != ''">
+                and state = #{state}
+            </if>
+            <if test="start != null and start != '' and end != null and end != ''">
+                and upload_time between #{start} and #{end}
+            </if>
+        </where>
+        order by state limit #{page},#{limit}
+    </select>
+
+    <select id="findFileCount" resultType="java.lang.Integer" parameterType="java.util.Map">
+        select count(*) from tb_file
+        <where>
+            <if test="file_title != null and file_title != ''">
+                and file_title like concat('%',#{file_title},'%')
+            </if>
+            <if test="user_id != null and user_id != ''">
+                and user_id like concat('%',#{user_id},'%')
+            </if>
+            <if test="type != null and type != ''">
+                and type = #{type}
+            </if>
+            <if test="state != null and state != ''">
+                and state = #{state}
+            </if>
+            <if test="start != null and start != '' and end != null and end != ''">
+                and upload_time between #{start} and #{end}
+            </if>
+        </where>
+    </select>
+
+    <select id="findFile" resultType="TB_FILE" parameterType="java.lang.Integer">
+        select * from tb_file where file_id = #{file_id}
+    </select>
+
+    <update id="updateState" parameterType="java.util.Map">
+        update tb_file set state = #{state} where file_id = #{file_id}
+    </update>
+
+    <select id="userFindList" parameterType="java.util.Map" resultType="TB_FILE">
+        select * from tb_file
+        <where>
+            <if test="file_title != null and file_title != ''">
+                and file_title like concat('%',#{file_title},'%')
+            </if>
+            and state = 2
+        </where>
+        order by upload_time desc limit #{page},#{limit}
+    </select>
+
+    <select id="userFindCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+        select count(*) from tb_file
+        <where>
+            <if test="file_title != null and file_title != ''">
+                and file_title like concat('%',#{file_title},'%')
+            </if>
+            and state = 2
+        </where>
+    </select>
+</mapper>

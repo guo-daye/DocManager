@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.great.demo.mapper.AuthorityMapper">
+    <select id="selectAuthority" resultMap="findRole" parameterType="java.lang.Integer">
+        select a.rr_id,a.row_id,a.role_id,b.role from tb_rolerelation a join tb_role b on a.role_id = b.role_id and a.row_id = #{row_id}
+    </select>
+
+    <resultMap id="findRole" type="TB_ROLERELATION">
+        <id column="RR_ID" property="rr_id"/>
+        <result column="ROW_ID" property="row_id"/>
+        <result column="ROLE_ID" property="role_id"/>
+        <association property="tb_role" column="ROLE_ID" javaType="TB_ROLE">
+            <id column="ROLE_ID" property="role_id"/>
+            <result column="ROLE" property="role"/>
+        </association>
+    </resultMap>
+
+    <select id="findParentMenu" resultType="TB_MENU" parameterType="java.lang.Integer">
+        select * from tb_menu where parent_id = #{parent_id}
+    </select>
+
+    <select id="findMenu" resultMap="findMenu" parameterType="java.util.Map">
+        select b.menu_id,b.menu_name,b.menu_url,b.parent_id,a.state from tb_menu b join tb_rolemenu a on a.menu_id = b.menu_id and a.role_id = #{role_id} and b.parent_id = #{parent_id}
+    </select>
+
+    <resultMap id="findMenu" type="TB_MENU">
+        <id column="MENU_ID" property="menu_id"/>
+        <result column="MENU_NAME" property="menu_name"/>
+        <result column="MENU_URL" property="menu_url"/>
+        <result column="PARENT_ID" property="parent_id"/>
+        <result column="STATE" property="state"/>
+    </resultMap>
+    
+    <select id="findRoleList" resultType="TB_ROLE" parameterType="java.util.Map">
+        select * from tb_role
+        <where>
+            <if test="role != '' and role != null">
+                and role like concat('%',#{role},'%')
+            </if>
+        </where>
+        limit #{page} , #{limit}
+    </select>
+
+    <select id="findRoleCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+        select count(*) from tb_role
+        <where>
+            <if test="role != '' and role != null">
+                and role like concat('%',#{role},'%')
+            </if>
+        </where>
+    </select>
+
+    <update id="resetMenuState" parameterType="java.util.Map">
+        update tb_rolemenu
+        <choose>
+            <when test="state == 1">
+                set state = 1
+            </when>
+            <otherwise>
+                set state = 2
+            </otherwise>
+        </choose>
+        where role_id =  #{role_id} and menu_id in
+        <foreach collection="list" item="tb_menu" open="(" separator="," close=")">
+            #{tb_menu.menu_id}
+        </foreach>
+    </update>
+
+    <update id="resetAllMenu" parameterType="java.util.Map">
+        update tb_rolemenu
+        <choose>
+            <when test="state == 1">
+                set state = 1
+            </when>
+            <otherwise>
+                set state = 2
+            </otherwise>
+        </choose>
+        where role_id =  #{role_id}
+    </update>
+    
+    <insert id="addRoleRelation" parameterType="com.great.demo.entity.TB_ROLERELATION">
+        insert  into tb_rolerelation (row_id,role_id) values (#{row_id},#{role_id})
+    </insert>
+
+    <select id="findRoleId" resultType="com.great.demo.entity.TB_ROLE" parameterType="java.lang.String">
+        select * from tb_role where role = #{role}
+    </select>
+</mapper>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>文件上传</title>
+    <link rel="stylesheet" type="text/css" href="/DocManager/js/layui/css/layui.css"/>
+    <script type="text/javascript" src="/DocManager/js/layui/layui.js"></script>
+</head>
+<body>
+<form class="layui-form" action="" lay-filter="example" onsubmit="return false;">
+    <div class="layadmin-user-login-box layadmin-user-login-header">
+        <div class="layui-form-item">
+            <label class="layui-form-label">下载积分：</label>
+            <div class="layui-input-inline">
+                <select name="integral" lay-verify="required" id="integral">
+                    <option value="10">10积分</option>
+                    <option value="20">20积分</option>
+                    <option value="30">30积分</option>
+                    <option value="40">40积分</option>
+                    <option value="50">50积分</option>
+                </select>
+            </div>
+        </div>
+        <div class="demoTable">
+            <div style="padding-bottom: 10px;">
+                <div class="layui-upload">
+                    <button type="button" class="layui-btn layui-btn-normal" id="test8">选择文件</button>
+                    <button type="button" class="layui-btn" id="test9"><i class="layui-icon">&#xe67c;</i>开始上传</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<div class="layui-progress layui-progress-big" lay-showpercent="true" lay-filter="demo">
+    <div class="layui-progress-bar layui-bg-red" lay-percent="0%"></div>
+</div>
+<script>
+    layui.use(['form','upload','jquery','element','layer'], function(){
+        var upload = layui.upload, $=layui.jquery,form = layui.form,element = layui.element,layer = layui.layer;
+        //执行实例
+        var uploadInst = upload.render({
+            elem: '#test8' //绑定元素
+            ,url:'../../file/upload' //上传接口
+            ,auto: false
+            ,accept: 'file'
+            ,exts:'docx|doc|ppt|pptx|xls|xlsx|pdf|txt'
+            ,bindAction: '#test9'
+            ,data:{'integral':$('#integral').val()}
+            ,before:function () {
+                element.progress('demo', '0%');//设置页面进度条
+            }
+            ,progress:function(n, elem){//上传进度回调 value进度值
+                var percent = n + '%'
+                element.progress('demo', percent);//设置页面进度条
+            }
+            ,done: function(res){
+                //上传完毕回调
+                alert("上传成功！");
+            }
+            ,error: function(){
+                //请求异常回调
+                alert("上传失败！");
+            }
+        });
+    });
+</script>
+</body>
+</html>
+
